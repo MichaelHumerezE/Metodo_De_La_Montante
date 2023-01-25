@@ -1,0 +1,28 @@
+//---------------------------------------------------------------------------
+
+#include <vcl.h>
+#pragma hdrstop
+
+#include "MetodoMontante.h"
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+TForm1 *Form1;
+//---------------------------------------------------------------------------
+__fastcall TForm1::TForm1(TComponent* Owner)
+	: TForm(Owner)
+{
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::SpeedButton1Click(TObject *Sender)
+{
+ShowMessage("Esto es una prueba");
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::INICIARClick(TObject *Sender)
+{
+Form1->TransparentColor = true;
+Form1->TransparentColorValue = .75;
+ShowMessage("Esto es una prueba");
+}
+//---------------------------------------------------------------------------

@@ -1,0 +1,226 @@
+//---------------------------------------------------------------------------
+
+#include <vcl.h>
+#pragma hdrstop
+
+#include "MetodoMontante.h"
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+TForm2 *Form2;
+int n;
+//---------------------------------------------------------------------------
+__fastcall TForm2::TForm2(TComponent* Owner)
+	: TForm(Owner)
+
+{
+//Poniendo invisible todas las Matrices
+	Matriz2->Visible = false;
+	V2->Visible = false;
+	Matriz->Visible = false;
+	Inversa->Visible = false;
+	V->Visible = false;
+//Poniendo invisible los botones, label y edit
+	BtnResolver->Visible = false;
+	EditDetermintante->Visible = false;
+	Label1->Visible = false;
+	Label2->Visible = false;
+	Label3->Visible = false;
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm2::BtnSalirClick(TObject *Sender){
+	Form2->DestroyWindowHandle();
+	Form2->Destroying();
+	Form2->Close();
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm2::BtnDimensionarClick(TObject *Sender){
+	int N = StrToInt(InputBox("DIMENSIONAR LA MATRIZ PRINCIPAL","Introduzca un número: ",""));
+//Dimensionando Matriz Principal
+	Matriz1->RowCount = N;
+	Matriz1->ColCount = N;
+	V1->RowCount = N;
+//Dimensionando Matriz De Resultado
+	Matriz2->RowCount = N;
+	Matriz2->ColCount = N;
+	V2->RowCount = N;
+//Dimensionando Matriz Inversa
+	Inversa->RowCount = N;
+	Inversa->ColCount = N;
+//Ajustando el tamaño de las matrices
+	Matriz1->Height = N * 26;
+	V1->Height = N * 27;
+	Matriz2->Height = N * 26;
+	V2->Height = N * 26;
+	Inversa->Height = N * 26;
+	Matriz->Height = N * 27;
+//Almacenado el tamaño de la Matriz Principal
+	n = N;
+	BtnResolver->Visible = true;
+//Poniendo los datos a la matriz principal
+	for (int i = 0; i < N; i++) {
+		for (int j = 0; j < N; j++) {
+			Matriz1->Cells[j][i] = InputBox("INTRODUZCA LOS VALORES","Posicion [" + IntToStr(j) + "]" + "," + "[" + IntToStr(i) + "]","");
+		}
+	}
+	for (int i = 0; i < N; i++) {
+		V1->Cells[0][i] = InputBox("INTRODUZCA LOS VALORES","Posicion [0],[" + IntToStr(i) + "]" , "");
+	}
+}
+//---------------------------------------------------------------------------
+void cargar(TStringGrid *m,TStringGrid *A,TStringGrid *B,TStringGrid *matb,int n){
+//Llenando la Matriz A
+	for (int x = 0; x < n; x++){
+		for(int y = 0;y < n;y++){
+			m->Cells[y][x] = StrToInt(A->Cells[x][y]);
+			B->Cells[x][y] = 0;
+		}
+		matb->Cells[0][x] = 0;
+	}
+}
+//---------------------------------------------------------------------------
+void cargarInversa(TStringGrid *a,int n){
+	for (int x = 0; x < n; x++){
+		for (int y = 0; y < n; y++){
+			if(x==y){
+				a->Cells[x][y]=1;
+			}else{
+				a->Cells[x][y]=0;
+			}
+		}
+	}
+}
+//---------------------------------------------------------------------------
+void cargarV(TStringGrid *v,TStringGrid *mata,TStringGrid *matb,int n){
+	for (int x = 0; x < n; x++){
+		v->Cells[0][x] = StrToInt(mata->Cells[0][x]);
+		matb->Cells[0][x] = mata->Cells[0][x];
+	}
+}
+//---------------------------------------------------------------------------
+void PermutarCol(TStringGrid *A, TStringGrid *mata, int n, int x){
+	int a,c;
+	for (int i = x; i < n; i++) {
+		a = StrToInt(A->Cells[i+1][x]);
+		if (a != 0) {
+			c = i+1;
+			i = n;
+		}
+	}
+	for (int j = 0; j < n; j++) {
+		int aux1 = StrToInt(mata->Cells[0][j]);
+		mata->Cells[j][0] = aux1;
+	}
+	for (int i = 0; i < n; i++) {
+		int aux = StrToInt(A->Cells[x][i]);
+		A->Cells[x][i] = A->Cells[c][i];
+		A->Cells[c][i] = aux;
+	}
+	int aux = StrToInt(mata->Cells[x][0]);
+	mata->Cells[x][0] = mata->Cells[c][0];
+	mata->Cells[c][0] = aux;
+	for (int q = 0; q < n; q++) {
+		int aux1 = StrToInt(mata->Cells[q][0]);
+		mata->Cells[0][q] = aux1;
+	}
+}
+
+//---------------------------------------------------------------------------
+void Montante(TStringGrid *I,TStringGrid *A,TStringGrid *B,TStringGrid *mata,TStringGrid *matb,int n){
+	int x, y, w;
+	for(x = 0; x < n ; x++){
+		if ((x + 1 != n) && (A->Cells[x][x] == 0)) {
+			PermutarCol(A,mata,n,x);
+		}
+		for (y = 0; y < n ; y++){ //iguala el renglon k de la siguiente matriz al de la pasada
+			B->Cells[x][y] = A->Cells[x][y];
+		}
+		for (y = 0; y < n ; y++){ //crea 0 en la columna menos en la diagonal
+			if (y == x){
+			}else{
+				B->Cells[y][x] = 0;
+			}
+		}
+		for (y = 0; y < n;y++){ //iguala el valor pasado de la diagonal
+			B->Cells[y][y] = A->Cells[x][x];
+		}
+		for (y = 0; y < n; y++){ //hace el producto cruz
+			if (y == x){
+			}else{
+				matb->Cells[0][y] = (StrToInt(mata->Cells[0][y])*StrToInt(A->Cells[x][x])) - (StrToInt(A->Cells[y][x])*StrToInt(mata->Cells[0][x]));
+				if (x == 0){
+				}else{
+					matb->Cells[0][y] = StrToInt(matb->Cells[0][y]) / StrToInt(A->Cells[0][0]);
+				}
+			}
+			for (w = x + 1 ; w < n ; w++){
+				if (y == x){
+				}else{
+					B->Cells[y][w] = (StrToInt(A->Cells[y][w])*StrToInt(A->Cells[x][x])) - (StrToInt(A->Cells[y][x])*StrToInt(A->Cells[x][w]));
+					I->Cells[y][w] = (StrToInt(I->Cells[y][w])*StrToInt(A->Cells[x][x])) - (StrToInt(A->Cells[y][x])*StrToInt(I->Cells[x][w]));
+					if (w == x+1){
+						I->Cells[y][w-1]=(StrToInt(I->Cells[y][w-1])*StrToInt(A->Cells[x][x])) - (StrToInt(A->Cells[y][x])*StrToInt(I->Cells[x][w-1]));
+					}
+					if (x == 0){
+					}else{
+						B->Cells[y][w]=StrToInt(B->Cells[y][w]) / StrToInt(A->Cells[0][0]);
+						I->Cells[y][w]=StrToInt(I->Cells[y][w]) / StrToInt(A->Cells[0][0]);
+						if (w == x+1){
+							I->Cells[y][w-1]=StrToInt(I->Cells[y][w-1]) / StrToInt(A->Cells[0][0]);
+						}
+					}
+				}
+			}
+		}
+		for (y = 0; y < n ; y++){
+			for (w = 0; w < n; w++){
+				A->Cells[y][w]=B->Cells[y][w];
+			}
+			mata->Cells[0][y]=matb->Cells[0][y];
+		}
+	}
+}
+//---------------------------------------------------------------------------
+void SistEcuaciones(TStringGrid *c,TStringGrid *a,TStringGrid *b,int n){
+	b->RowCount = a->RowCount;
+	b->ColCount = 3; String s = "X";
+	for (int y = 0; y < n ; y++){
+		b->Cells[0][y] = s+(y+1);
+	}
+	for (int x = 0; x < n ; x++){
+		b->Cells[1][x] = a->Cells[0][x] + "/" + c->Cells[n-1][n-1];
+		b->Cells[2][x] = StrToInt(a->Cells[0][x]) / StrToInt(c->Cells[n-1][n-1]);
+	}
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm2::BtnResolverClick(TObject *Sender)
+{
+//Cargando las matrices con los valores de la Matriz Principal
+	cargar(Matriz,Matriz1,Matriz2,V2,n);
+	cargarInversa(Inversa,n);
+	cargarV(V,V1,V2,n);
+//Resolviendo por el Metodo Montante
+	Montante(Inversa,Matriz,Matriz2,V,V2,n);
+	SistEcuaciones(Matriz2,V2,Matriz,n);
+//Habilitando las Matrices y sus etiquetas
+	Label1->Visible = true;
+	Label3->Visible = true;
+	Matriz->Visible = true;
+	Matriz2->Visible = true;
+	V2->Visible = true;
+	EditDetermintante->Text = Matriz2->Cells[0][0];
+	EditDetermintante->Visible = true;
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm2::BtnInverzaClick(TObject *Sender)
+{
+	Inversa->Visible = false;
+	Label2->Visible = false;
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm2::InversaClick(TObject *Sender){
+	Inversa->Visible = false;
+}
+//---------------------------------------------------------------------------
+
